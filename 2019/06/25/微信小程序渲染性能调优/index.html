@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.loli.net/css?family=EB Garamond:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="小程序优化,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;网页的性能优化是前端开发老生常谈的热门话题，其中微信小程序因其页面双线程架构设计，所以性能优化的手段跟传统的 H5 应用不太一样。今天主要介绍一下微信小程序页面双线程架构的特性给页面渲染带来的一些影响，以及应对的一些渲染性能调优策略。为了叙述方便，下文会把微信小程序简称为小程序。 小程序的双线程架构&amp;#160; &amp;#160; &amp;#160; &amp;#">
+<meta name="keywords" content="小程序优化">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微信小程序渲染性能调优">
+<meta property="og:url" content="http://yoursite.com/2019/06/25/微信小程序渲染性能调优/index.html">
+<meta property="og:site_name" content="YiMao">
+<meta property="og:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;网页的性能优化是前端开发老生常谈的热门话题，其中微信小程序因其页面双线程架构设计，所以性能优化的手段跟传统的 H5 应用不太一样。今天主要介绍一下微信小程序页面双线程架构的特性给页面渲染带来的一些影响，以及应对的一些渲染性能调优策略。为了叙述方便，下文会把微信小程序简称为小程序。 小程序的双线程架构&amp;#160; &amp;#160; &amp;#160; &amp;#">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EiaXgHwZLo9EqDqWEjNdBMkxFTOpdUVCWY8hodyb56mXc8xGVGTMUBJQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EcSBZCJT2n9tUWBc4IVXibFW4cGhn8xPAnicF7MbdnFZHTos4aB49XiaEg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EagqWJLeFKwFBFBfVXeN5FF5JMesvQsKuAvHdKf8s8b5ibyTBdiaiaUuTQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04Eo7XDjsaIcRCicPP6YJJnuMR0DAyuCSic7SX8TkXb0PaII5eSSP1m20Hw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EH1jFwq8biczcL09kbVPbAWph8XpuGMSrov0HDbiaZs5nuBS7IFiaX0H1g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EBg6eUDOMVvHZz1eH8jGQY09zP1McHqppxkiacxlmq2SedtvBQ6h2libw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+<meta property="og:updated_time" content="2019-06-25T07:30:45.077Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="微信小程序渲染性能调优">
+<meta name="twitter:description" content="&amp;#160; &amp;#160; &amp;#160; &amp;#160;网页的性能优化是前端开发老生常谈的热门话题，其中微信小程序因其页面双线程架构设计，所以性能优化的手段跟传统的 H5 应用不太一样。今天主要介绍一下微信小程序页面双线程架构的特性给页面渲染带来的一些影响，以及应对的一些渲染性能调优策略。为了叙述方便，下文会把微信小程序简称为小程序。 小程序的双线程架构&amp;#160; &amp;#160; &amp;#160; &amp;#">
+<meta name="twitter:image" content="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EiaXgHwZLo9EqDqWEjNdBMkxFTOpdUVCWY8hodyb56mXc8xGVGTMUBJQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/06/25/微信小程序渲染性能调优/">
+
+
+
+
+
+  <title>微信小程序渲染性能调优 | YiMao</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">YiMao</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/06/25/微信小程序渲染性能调优/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="一毛">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YiMao">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">微信小程序渲染性能调优</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-06-25T14:40:12+08:00">
+                2019-06-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/小程序/" itemprop="url" rel="index">
+                    <span itemprop="name">小程序</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&#160; &#160; &#160; &#160;网页的性能优化是前端开发老生常谈的热门话题，其中微信小程序因其页面双线程架构设计，所以性能优化的手段跟传统的 H5 应用不太一样。今天主要介绍一下微信小程序页面双线程架构的特性给页面渲染带来的一些影响，以及应对的一些渲染性能调优策略。为了叙述方便，下文会把微信小程序简称为小程序。</p>
+<h2 id="小程序的双线程架构"><a href="#小程序的双线程架构" class="headerlink" title="小程序的双线程架构"></a>小程序的双线程架构</h2><p>&#160; &#160; &#160; &#160;与传统的浏览器Web页面最大区别在于，小程序的是基于 双线程 模型的，在这种架构中，小程序的渲染层使用 WebView 作为渲染载体，而逻辑层则由独立的 JsCore 线程运行 JS 脚本，双方并不具备数据直接共享的通道，因此渲染层和逻辑层的通信要由 Native 的 JSBrigde 做中转。</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EiaXgHwZLo9EqDqWEjNdBMkxFTOpdUVCWY8hodyb56mXc8xGVGTMUBJQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<h4 id="小程序更新视图数据的通信流程"><a href="#小程序更新视图数据的通信流程" class="headerlink" title="小程序更新视图数据的通信流程"></a>小程序更新视图数据的通信流程</h4><p>&#160; &#160; &#160; &#160;每当小程序视图数据需要更新时，逻辑层会调用小程序宿主环境提供的 setData 方法将数据从逻辑层传递到视图层，经过一系列渲染步骤之后完成UI视图更新。完整的通信流程如下：</p>
+<ol>
+<li>小程序逻辑层调用宿主环境的 setData 方法；</li>
+<li>逻辑层执行 JSON.stringify 将待传输数据转换成字符串并拼接到特定的JS脚本，并通过evaluateJavascript 执行脚本将数据传输到渲染层；</li>
+<li>渲染层接收到后， WebView JS 线程会对脚本进行编译，得到待更新数据后进入渲染队列等待 WebView 线程空闲时进行页面渲染；</li>
+<li>WebView 线程开始执行渲染时，待更新数据会合并到视图层保留的原始 data 数据，并将新数据套用在WXML片段中得到新的虚拟节点树。经过新虚拟节点树与当前节点树的 diff 对比，将差异部分更新到UI视图。同时，将新的节点树替换旧节点树，用于下一次重渲染；</li>
+</ol>
+<h2 id="引发渲染性能问题的一些原因"><a href="#引发渲染性能问题的一些原因" class="headerlink" title="引发渲染性能问题的一些原因"></a>引发渲染性能问题的一些原因</h2><p>在上述通信流程中，一些不恰当的操作可能会影响到页面渲染的性能。</p>
+<h4 id="setData传递大量的新数据"><a href="#setData传递大量的新数据" class="headerlink" title="setData传递大量的新数据"></a>setData传递大量的新数据</h4><p>&#160; &#160; &#160; &#160;数据的传输会经历跨线程传输和脚本编译的过程，当数据量过大，会增加脚本编译的执行时间，占用 WebView JS 线程。</p>
+<p>&#160; &#160; &#160; &#160;下图是我们做的一组测试统计：在相同网络环境下，各个机型分别对大小为1KB、2KB、3KB的数据执行 setData 操作所消耗的时间。</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EcSBZCJT2n9tUWBc4IVXibFW4cGhn8xPAnicF7MbdnFZHTos4aB49XiaEg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<p>从图中可以看出， setData 数据传输量越大，数据传输所消耗的时间越大。</p>
+<h4 id="频繁的执行setData操作"><a href="#频繁的执行setData操作" class="headerlink" title="频繁的执行setData操作"></a>频繁的执行setData操作</h4><p>频繁的执行 setData 会让 WebView JS 线程一直忙碌于脚本的编译、节点树的对比计算和页面渲染。导致的结果是：</p>
+<ul>
+<li>页面渲染结果有一定的延时。</li>
+<li>用户触发页面事件时，因 WebView JS 线程忙碌，用户事件未能及时的传输到逻辑层而导致反馈延迟。</li>
+</ul>
+<h4 id="过多的页面节点数"><a href="#过多的页面节点数" class="headerlink" title="过多的页面节点数"></a>过多的页面节点数</h4><ul>
+<li>页面初始渲染时，渲染树的构建、计算节点几何信息以及绘制节点到屏幕的时间开销都跟页面节点数量成正相关关系，页面节点数量越多，渲染耗时越长。</li>
+<li>每次执行 setData 更新视图，WebView JS 线程都要遍历节点树计算新旧节点数差异部分。当页面节点数量越多，计算的时间开销越大，减少节点树节点数量可以有效降低重渲染的时间开销。</li>
+</ul>
+<h2 id="渲染性能优化"><a href="#渲染性能优化" class="headerlink" title="渲染性能优化"></a>渲染性能优化</h2><p>基于引发渲染性能问题的原因，我们可以制定一些优化策略来避免性能问题的发生。</p>
+<h4 id="setData优化"><a href="#setData优化" class="headerlink" title="setData优化"></a>setData优化</h4><p>setData 作为逻辑层与视图层通信的媒介，是最容易造成渲染性能瓶颈的 API 。我们在使用 setData时应该遵循一些规则来尽可能避免性能问题的发生：</p>
+<h5 id="减少-setData-数据传输量"><a href="#减少-setData-数据传输量" class="headerlink" title="减少 setData 数据传输量"></a>减少 setData 数据传输量</h5><ol>
+<li>仅传输视图层使用到的数据，其他 JS 环境用到的数据存放到 data 对象外。</li>
+<li>合理利用局部更新。 setData 是支持使用 数据路径 的方式对对象的局部字段进行更新，我们可能会遇到这样的场景： list 列表是从后台获取的数据，并展示在页面上，当 list 列表的第一项数据的 src 字段需要更新时，一般情况下我们会从后台获取新的 list 列表，执行 setData 更新整个 list 列表。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">// 后台获取列表数据</span><br><span class="line">const list = requestSync(); </span><br><span class="line"></span><br><span class="line">// 更新整个列表</span><br><span class="line">this.setData(&#123; list &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>实际上，只有个别字段需要更新时，我们可以这么写来避免整个 list 列表更新:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">// 后台获取列表数据</span><br><span class="line">const list = requestSync(); </span><br><span class="line"></span><br><span class="line">// 局部更新列表</span><br><span class="line">this.setData(&#123; </span><br><span class="line">  &apos;list[0].src&apos;: list[0].src</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h5 id="降低-setData-执行频率"><a href="#降低-setData-执行频率" class="headerlink" title="降低 setData 执行频率"></a>降低 setData 执行频率</h5><ol>
+<li>在不影响业务流程的前提下，将多个 setData 调用合并执行，减少线程间通信频次。</li>
+<li>当需要在频繁触发的用户事件(如 PageScroll 、 Resize 事件)中调用 setData ，合理的利用 函数防抖(debounce) 和 函数节流(throttle) 可以减少 setData 执行次数。</li>
+</ol>
+<blockquote>
+<p>函数防抖（debounce）：函数在触发n秒后才执行一次，如果在n秒内重复触发函数，则重新计算时间。</p>
+</blockquote>
+<blockquote>
+<p>函数节流（throttle）：单位时间内，只会触发一次函数，如果同一个单位时间内触发多次函数，只会有一次生效。</p>
+</blockquote>
+<p>除了让开发者自觉遵循规则来减少 setData 数据传输量和执行频率之外，我们还可以自己设计一个 diff 算法，重新对 setData 进行封装，使得在 setData 执行之前，让待更新的数据与原 data 数据做 diff 对比，计算出数据差异 patch 对象，判断 patch 对象是否为空，如果为空则跳过执行更新，否则再将 patch 对象执行 setData 操作，从而达到减少数据传输量和降低执行 setData 频率的目的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">// setData重新封装成新的方法，使得数据更新前先对新旧数据做diff对比，再执行setData方法</span><br><span class="line">this.update = (data) =&gt; &#123;</span><br><span class="line">    return new Promise((resolve, reject) =&gt; &#123;</span><br><span class="line">        const result = diff(data, this.data);</span><br><span class="line">        if (!Object.keys(result).length) &#123;</span><br><span class="line">            resolve(null);</span><br><span class="line">            return;</span><br><span class="line">        &#125; </span><br><span class="line">        this.setData(result, () =&gt; &#123;</span><br><span class="line">            resolve(result);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>具体流程如下图：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EagqWJLeFKwFBFBfVXeN5FF5JMesvQsKuAvHdKf8s8b5ibyTBdiaiaUuTQ/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<h2 id="善用自定义组件"><a href="#善用自定义组件" class="headerlink" title="善用自定义组件"></a>善用自定义组件</h2><p>小程序自定义组件的实现是由小程序官方设计的 Exparser 框架所支持，框架实现的自定义组件的组件模型与 Web Components 标准的 Shadow DOM 相似：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04Eo7XDjsaIcRCicPP6YJJnuMR0DAyuCSic7SX8TkXb0PaII5eSSP1m20Hw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<p>在页面引用自定义组件后，当初始化页面时，Exparser 会在创建页面实例的同时，也会根据自定义组件的注册信息进行组件实例化，然后根据组件自带的 data 数据和组件WXML，构造出独立的 Shadow Tree ，并追加到页面 Composed Tree 。创建出来的 Shadow Tree 拥有着自己独立的逻辑空间、数据、样式环境及setData调用：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EH1jFwq8biczcL09kbVPbAWph8XpuGMSrov0HDbiaZs5nuBS7IFiaX0H1g/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<p>基于自定义组件的 Shadow DOM 模型设计，我们可以将页面中一些需要高频执行 setData 更新的功能模块（如倒计时、进度条等）封装成自定义组件嵌入到页面中。</p>
+<p>当这些自定义组件视图需要更新时，执行的是组件自己的 setData ，新旧节点树的对比计算和渲染树的更新都只限于组件内有限的节点数量，有效降低渲染时间开销。</p>
+<p>下图是我们在微保小程序WeDrive首页中，将倒计时模块抽取自定义组件前后的setData更新耗时对比：</p>
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/iaGw4pBC4YzenbZCJicbzZMRQBNQdVib04EBg6eUDOMVvHZz1eH8jGQY09zP1McHqppxkiacxlmq2SedtvBQ6h2libw/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1" alt></p>
+<p>从图中可以看出，使用自定义组件后，倒计时模块 setData 平均渲染耗时有了非常明显的下降，实际在低端安卓机中体验会感觉明显的更流畅。</p>
+<p>当然，并不是使用自定义组件越多会越好，页面每新增一个自定义组件， Exparser 需要多管理一个组件实例，内存消耗会更大，当内存占用上升到一定程度，有可能导致 iOS 将部分 WKWebView 回收，安卓机体验会变得更加卡顿。因此要合理的使用自定义组件，同时页面设计也要注意不滥用标签。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>小程序双线程架构决定了数据通信优化会是性能优化中一个比较重要的点。而上述提到的几个优化建议只是优化渲染性能中的一部分，要想让你的页面体验变得更加丝滑，就要熟悉小程序框架的底层原理，根据小程序框架的特点，编写出“合身”的前端代码。</p>
+<blockquote>
+<p>作者：@梁沛聪</p>
+<p>原文：<a href="https://mp.weixin.qq.com/s/aAzwYA_RnKSt-y8xDHTtPQ" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/aAzwYA_RnKSt-y8xDHTtPQ</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/小程序优化/" rel="tag"># 小程序优化</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/06/25/教你炒股票3：你的喜好，你的死亡陷阱！/" rel="next" title="教你炒股票3：你的喜好，你的死亡陷阱！">
+                <i class="fa fa-chevron-left"></i> 教你炒股票3：你的喜好，你的死亡陷阱！
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/06/26/electron-vue在使用element-ui时部分组件无法显示问题/" rel="prev" title="electron-vue在使用element-ui时部分组件无法显示问题">
+                electron-vue在使用element-ui时部分组件无法显示问题 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">一毛</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#小程序的双线程架构"><span class="nav-number">1.</span> <span class="nav-text">小程序的双线程架构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#小程序更新视图数据的通信流程"><span class="nav-number">1.0.1.</span> <span class="nav-text">小程序更新视图数据的通信流程</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#引发渲染性能问题的一些原因"><span class="nav-number">2.</span> <span class="nav-text">引发渲染性能问题的一些原因</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#setData传递大量的新数据"><span class="nav-number">2.0.1.</span> <span class="nav-text">setData传递大量的新数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#频繁的执行setData操作"><span class="nav-number">2.0.2.</span> <span class="nav-text">频繁的执行setData操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#过多的页面节点数"><span class="nav-number">2.0.3.</span> <span class="nav-text">过多的页面节点数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#渲染性能优化"><span class="nav-number">3.</span> <span class="nav-text">渲染性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#setData优化"><span class="nav-number">3.0.1.</span> <span class="nav-text">setData优化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#减少-setData-数据传输量"><span class="nav-number">3.0.1.1.</span> <span class="nav-text">减少 setData 数据传输量</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#降低-setData-执行频率"><span class="nav-number">3.0.1.2.</span> <span class="nav-text">降低 setData 执行频率</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#善用自定义组件"><span class="nav-number">4.</span> <span class="nav-text">善用自定义组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">一毛</span>
+
+  
+</div>
+
+
+  <div class="powered-by">footer.powered</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
